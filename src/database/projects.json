@@ -1,0 +1,45 @@
+{
+  "projects": [
+    {
+      "id": "1",
+      "name": "Bookings",
+      "description": "Booking management system",
+      "url": "https://bookings-rust-rho.vercel.app/",
+      "category": "Management",
+      "dateAdded": "2025-10-21T00:00:00.000Z",
+      "isActive": true
+    },
+    {
+      "id": "2", 
+      "name": "Funeral Form",
+      "description": "Funeral service form management",
+      "url": "https://funeral-form.vercel.app/",
+      "category": "Forms",
+      "dateAdded": "2025-10-21T00:00:00.000Z",
+      "isActive": true
+    },
+    {
+      "id": "3",
+      "name": "Membership",
+      "description": "Membership management system", 
+      "url": "https://membership-plum.vercel.app/",
+      "category": "Management",
+      "dateAdded": "2025-10-21T00:00:00.000Z",
+      "isActive": true
+    },
+    {
+      "id": "4",
+      "name": "Taha School System",
+      "description": "School management system",
+      "url": "https://taha-school-system.vercel.app/",
+      "category": "Education",
+      "dateAdded": "2025-10-21T00:00:00.000Z",
+      "isActive": true
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0",
+    "lastUpdated": "2025-10-21T00:00:00.000Z",
+    "totalProjects": 4
+  }
+}

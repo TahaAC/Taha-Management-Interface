@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import './App.css'
+import projectDB from './database/ProjectDatabase'
 
 function App() {
   const [projects, setProjects] = useState([])
@@ -7,53 +8,28 @@ function App() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    url: ''
+    url: '',
+    category: 'Management'
   })
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('All')
+  const [categories, setCategories] = useState(['All'])
 
-  // Load projects from localStorage on mount
+  // Load projects from database on mount
   useEffect(() => {
-    const savedProjects = localStorage.getItem('tahaProjects')
-    if (savedProjects) {
-      setProjects(JSON.parse(savedProjects))
-    } else {
-      // Initialize with default projects
-      const defaultProjects = [
-        {
-          id: Date.now() + 1,
-          name: 'Bookings',
-          description: 'Booking management system',
-          url: 'https://bookings-rust-rho.vercel.app/'
-        },
-        {
-          id: Date.now() + 2,
-          name: 'Funeral Form',
-          description: 'Funeral service form management',
-          url: 'https://funeral-form.vercel.app/'
-        },
-        {
-          id: Date.now() + 3,
-          name: 'Membership',
-          description: 'Membership management system',
-          url: 'https://membership-plum.vercel.app/'
-        },
-        {
-          id: Date.now() + 4,
-          name: 'Taha School System',
-          description: 'School management system',
-          url: 'https://taha-school-system.vercel.app/'
-        }
-      ]
-      setProjects(defaultProjects)
-      localStorage.setItem('tahaProjects', JSON.stringify(defaultProjects))
-    }
+    loadProjects()
+    loadCategories()
   }, [])
 
-  // Save projects to localStorage whenever they change
-  useEffect(() => {
-    if (projects.length > 0) {
-      localStorage.setItem('tahaProjects', JSON.stringify(projects))
-    }
-  }, [projects])
+  const loadProjects = () => {
+    const allProjects = projectDB.getAllProjects()
+    setProjects(allProjects)
+  }
+
+  const loadCategories = () => {
+    const allCategories = ['All', ...projectDB.getCategories()]
+    setCategories(allCategories)
+  }
 
   const handleInputChange = (e) => {
     setFormData({
@@ -65,21 +41,55 @@ function App() {
   const handleSubmit = (e) => {
     e.preventDefault()
     if (formData.name && formData.description && formData.url) {
-      const newProject = {
-        id: Date.now(),
-        ...formData
+      const result = projectDB.addProject({
+        name: formData.name,
+        description: formData.description,
+        url: formData.url,
+        category: formData.category || 'Management'
+      })
+      
+      if (result.success) {
+        loadProjects()
+        loadCategories()
+        setFormData({ name: '', description: '', url: '', category: 'Management' })
+        alert('Project added successfully!')
+      } else {
+        alert('Error adding project: ' + result.error)
       }
-      setProjects([...projects, newProject])
-      setFormData({ name: '', description: '', url: '' })
-      alert('Project added successfully!')
     }
   }
 
   const handleDelete = (id) => {
     if (confirm('Are you sure you want to delete this project?')) {
-      setProjects(projects.filter(project => project.id !== id))
+      const result = projectDB.deleteProject(id)
+      if (result.success) {
+        loadProjects()
+        loadCategories()
+      } else {
+        alert('Error deleting project: ' + result.error)
+      }
     }
   }
+
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value)
+  }
+
+  const handleCategoryFilter = (e) => {
+    setSelectedCategory(e.target.value)
+  }
+
+  // Filter projects based on search and category
+  const filteredProjects = projects.filter(project => {
+    const matchesSearch = searchTerm === '' || 
+      project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      project.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      project.url.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    const matchesCategory = selectedCategory === 'All' || project.category === selectedCategory
+    
+    return matchesSearch && matchesCategory
+  })
 
   return (
     <div className="app">
@@ -129,6 +139,23 @@ function App() {
                 />
               </div>
               <div className="form-group">
+                <label htmlFor="category">Category</label>
+                <select
+                  id="category"
+                  name="category"
+                  value={formData.category}
+                  onChange={handleInputChange}
+                  required
+                >
+                  <option value="Management">Management</option>
+                  <option value="Forms">Forms</option>
+                  <option value="Education">Education</option>
+                  <option value="Finance">Finance</option>
+                  <option value="Communications">Communications</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div className="form-group">
                 <label htmlFor="url">URL</label>
                 <input
                   type="url"
@@ -152,6 +179,7 @@ function App() {
                   <div key={project.id} className="project-item">
                     <div className="project-info">
                       <strong>{project.name}</strong>
+                      <span className="project-category">{project.category}</span>
                       <span>{project.description}</span>
                       <a href={project.url} target="_blank" rel="noopener noreferrer">
                         {project.url}
@@ -169,20 +197,56 @@ function App() {
             </div>
           </div>
         ) : (
-          <div className="projects-grid">
-            {projects.map((project) => (
-              <a 
-                key={project.id} 
-                href={project.url} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="project-card"
-              >
-                <h2 className="project-name">{project.name}</h2>
-                <p className="project-description">{project.description}</p>
-                <span className="view-link">View Project →</span>
-              </a>
-            ))}
+          <div className="dashboard-section">
+            <div className="dashboard-controls">
+              <div className="search-filter-container">
+                <input
+                  type="text"
+                  placeholder="🔍 Search projects..."
+                  value={searchTerm}
+                  onChange={handleSearch}
+                  className="search-input"
+                />
+                <select
+                  value={selectedCategory}
+                  onChange={handleCategoryFilter}
+                  className="category-filter"
+                >
+                  {categories.map(category => (
+                    <option key={category} value={category}>{category}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="project-stats">
+                <span className="stat">Total: {projects.length}</span>
+                <span className="stat">Showing: {filteredProjects.length}</span>
+              </div>
+            </div>
+            
+            <div className="projects-grid">
+              {filteredProjects.map((project) => (
+                <a 
+                  key={project.id} 
+                  href={project.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="project-card"
+                >
+                  <div className="project-header">
+                    <h2 className="project-name">{project.name}</h2>
+                    <span className="project-category-badge">{project.category}</span>
+                  </div>
+                  <p className="project-description">{project.description}</p>
+                  <span className="view-link">View Project →</span>
+                </a>
+              ))}
+            </div>
+            
+            {filteredProjects.length === 0 && (
+              <div className="no-results">
+                <p>No projects found matching your criteria.</p>
+              </div>
+            )}
           </div>
         )}
       </main>

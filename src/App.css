@@ -576,6 +576,143 @@
   transform: scale(1.1);
 }
 
+/* Dashboard Controls */
+.dashboard-section {
+  width: 100%;
+}
+
+.dashboard-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.search-filter-container {
+  display: flex;
+  gap: 1rem;
+  flex: 1;
+  min-width: 300px;
+}
+
+.search-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 1rem;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.search-input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.category-filter {
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 1rem;
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  min-width: 150px;
+}
+
+.category-filter option {
+  background: #7C3AED;
+  color: white;
+}
+
+.project-stats {
+  display: flex;
+  gap: 1rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+}
+
+.stat {
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+}
+
+.project-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.project-category-badge {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.project-category {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.no-results {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.form-group select {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.form-group select:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.5);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.3);
+}
+
+.form-group select option {
+  background: white;
+  color: #333;
+  padding: 0.5rem;
+}
+
 @media (max-width: 768px) {
   .admin-form,
   .manage-projects {
@@ -590,5 +727,28 @@
 
   .delete-btn {
     align-self: flex-end;
+  }
+
+  .dashboard-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-filter-container {
+    flex-direction: column;
+    min-width: auto;
+  }
+
+  .project-stats {
+    justify-content: center;
+  }
+
+  .project-header {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .project-category-badge {
+    align-self: flex-start;
   }
 }
