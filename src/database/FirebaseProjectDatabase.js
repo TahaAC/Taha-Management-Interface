@@ -6,23 +6,20 @@ import {
   updateDoc, 
   deleteDoc, 
   query, 
-  orderBy, 
-  where,
-  onSnapshot 
+  orderBy
 } from "firebase/firestore";
 import { db } from '../config/firebase';
 
 class FirebaseProjectDatabase {
   constructor() {
-    this.collectionName = 'projects';
+    this.collectionName = 'tahaProjects';
     this.projectsRef = collection(db, this.collectionName);
   }
 
   // Get all projects
   async getAllProjects() {
     try {
-      const q = query(this.projectsRef, orderBy('dateAdded', 'desc'));
-      const querySnapshot = await getDocs(q);
+      const querySnapshot = await getDocs(this.projectsRef);
       const projects = [];
       
       querySnapshot.forEach((doc) => {
@@ -32,10 +29,12 @@ class FirebaseProjectDatabase {
         });
       });
       
-      return projects;
+      // Sort by dateAdded (newest first)
+      return projects.sort((a, b) => new Date(b.dateAdded || 0) - new Date(a.dateAdded || 0));
     } catch (error) {
       console.error('Error fetching projects:', error);
-      return [];
+      // Fallback to localStorage if Firebase fails
+      return this.getLocalStorageData();
     }
   }
 
@@ -45,8 +44,7 @@ class FirebaseProjectDatabase {
       const newProject = {
         ...projectData,
         dateAdded: new Date().toISOString(),
-        isActive: true,
-        createdAt: new Date()
+        isActive: true
       };
       
       const docRef = await addDoc(this.projectsRef, newProject);
@@ -57,23 +55,8 @@ class FirebaseProjectDatabase {
       };
     } catch (error) {
       console.error('Error adding project:', error);
-      return { success: false, error: error.message };
-    }
-  }
-
-  // Update existing project
-  async updateProject(id, updatedData) {
-    try {
-      const projectRef = doc(db, this.collectionName, id);
-      await updateDoc(projectRef, {
-        ...updatedData,
-        updatedAt: new Date()
-      });
-      
-      return { success: true };
-    } catch (error) {
-      console.error('Error updating project:', error);
-      return { success: false, error: error.message };
+      // Fallback to localStorage
+      return this.addToLocalStorage(projectData);
     }
   }
 
@@ -90,161 +73,46 @@ class FirebaseProjectDatabase {
     }
   }
 
-  // Search projects
-  async searchProjects(searchTerm) {
-    try {
-      const projects = await this.getAllProjects();
-      const term = searchTerm.toLowerCase();
-      
-      return projects.filter(project => 
-        project.name.toLowerCase().includes(term) ||
-        project.description.toLowerCase().includes(term) ||
-        (project.category && project.category.toLowerCase().includes(term)) ||
-        project.url.toLowerCase().includes(term)
-      );
-    } catch (error) {
-      console.error('Error searching projects:', error);
-      return [];
-    }
-  }
-
-  // Get projects by category
-  async getProjectsByCategory(category) {
-    try {
-      const q = query(
-        this.projectsRef, 
-        where('category', '==', category),
-        orderBy('dateAdded', 'desc')
-      );
-      const querySnapshot = await getDocs(q);
-      const projects = [];
-      
-      querySnapshot.forEach((doc) => {
-        projects.push({
-          id: doc.id,
-          ...doc.data()
-        });
-      });
-      
-      return projects;
-    } catch (error) {
-      console.error('Error fetching projects by category:', error);
-      return [];
-    }
-  }
-
-  // Get all categories
+  // Get categories
   async getCategories() {
     try {
       const projects = await this.getAllProjects();
-      const categories = [...new Set(projects.map(project => project.category || 'Uncategorized'))];
+      const categories = [...new Set(projects.map(project => project.category || 'Management'))];
       return categories.sort();
     } catch (error) {
       console.error('Error fetching categories:', error);
+      return ['Management', 'Forms', 'Education'];
+    }
+  }
+
+  // Fallback methods for localStorage
+  getLocalStorageData() {
+    try {
+      const data = localStorage.getItem('tahaProjectsDB');
+      return data ? JSON.parse(data) : [];
+    } catch (error) {
+      console.error('Error reading localStorage:', error);
       return [];
     }
   }
 
-  // Listen to real-time updates
-  onProjectsChange(callback) {
-    const q = query(this.projectsRef, orderBy('dateAdded', 'desc'));
-    
-    return onSnapshot(q, (querySnapshot) => {
-      const projects = [];
-      querySnapshot.forEach((doc) => {
-        projects.push({
-          id: doc.id,
-          ...doc.data()
-        });
-      });
-      callback(projects);
-    }, (error) => {
-      console.error('Error listening to projects:', error);
-      callback([]);
-    });
-  }
-
-  // Migrate localStorage data to Firebase
-  async migrateFromLocalStorage() {
+  addToLocalStorage(projectData) {
     try {
-      const localData = localStorage.getItem('tahaProjectsDB');
-      if (!localData) return { success: false, message: 'No local data found' };
-      
-      const projects = JSON.parse(localData);
-      const migrationResults = [];
-      
-      for (const project of projects) {
-        // Remove the old id to let Firebase generate a new one
-        const { id, ...projectData } = project;
-        const result = await this.addProject(projectData);
-        migrationResults.push(result);
-      }
-      
-      const successful = migrationResults.filter(r => r.success).length;
-      const failed = migrationResults.filter(r => !r.success).length;
-      
-      return { 
-        success: true, 
-        message: `Migrated ${successful} projects successfully. ${failed} failed.`,
-        successful,
-        failed 
+      const projects = this.getLocalStorageData();
+      const newProject = {
+        id: Date.now().toString(),
+        ...projectData,
+        dateAdded: new Date().toISOString(),
+        isActive: true
       };
+      
+      projects.push(newProject);
+      localStorage.setItem('tahaProjectsDB', JSON.stringify(projects));
+      
+      return { success: true, project: newProject };
     } catch (error) {
-      console.error('Error migrating data:', error);
+      console.error('Error saving to localStorage:', error);
       return { success: false, error: error.message };
-    }
-  }
-
-  // Get database statistics
-  async getStats() {
-    try {
-      const projects = await this.getAllProjects();
-      const categories = await this.getCategories();
-      
-      return {
-        totalProjects: projects.length,
-        activeProjects: projects.filter(p => p.isActive !== false).length,
-        totalCategories: categories.length,
-        categories: categories,
-        lastUpdated: new Date().toISOString()
-      };
-    } catch (error) {
-      console.error('Error fetching stats:', error);
-      return {
-        totalProjects: 0,
-        activeProjects: 0,
-        totalCategories: 0,
-        categories: [],
-        lastUpdated: new Date().toISOString()
-      };
-    }
-  }
-
-  // Export Firebase data
-  async exportData() {
-    try {
-      const projects = await this.getAllProjects();
-      return {
-        projects,
-        metadata: {
-          version: "1.0.0",
-          exportDate: new Date().toISOString(),
-          totalProjects: projects.length,
-          source: "firebase"
-        }
-      };
-    } catch (error) {
-      console.error('Error exporting data:', error);
-      return {
-        projects: [],
-        metadata: {
-          version: "1.0.0",
-          exportDate: new Date().toISOString(),
-          totalProjects: 0,
-          source: "firebase",
-          error: error.message
-        }
-      };
     }
   }
 }

@@ -15,37 +15,12 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [categories, setCategories] = useState(['All'])
-  const [dataSummary, setDataSummary] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [isOnline, setIsOnline] = useState(navigator.onLine)
+  const [loading, setLoading] = useState(false)
 
-  // Load projects from Firebase database on mount
+  // Load projects from Firebase/localStorage on mount
   useEffect(() => {
     loadProjects()
     loadCategories()
-    
-    // Set up real-time listener
-    const unsubscribe = firebaseProjectDB.onProjectsChange((projects) => {
-      setProjects(projects)
-      setLoading(false)
-    })
-
-    // Cleanup listener on unmount
-    return () => unsubscribe()
-  }, [])
-
-  // Monitor online status
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true)
-    const handleOffline = () => setIsOnline(false)
-    
-    window.addEventListener('online', handleOnline)
-    window.addEventListener('offline', handleOffline)
-    
-    return () => {
-      window.removeEventListener('online', handleOnline)
-      window.removeEventListener('offline', handleOffline)
-    }
   }, [])
 
   const loadProjects = async () => {
@@ -134,9 +109,10 @@ function App() {
       })
       
       if (result.success) {
-        loadCategories() // Reload categories in case new one was added
+        await loadProjects() // Reload projects
+        await loadCategories() // Reload categories
         setFormData({ name: '', description: '', url: '', category: 'Management' })
-        alert('✅ Project added successfully to Firebase!')
+        alert('✅ Project added successfully!')
       } else {
         alert('❌ Error adding project: ' + result.error)
       }
@@ -149,7 +125,8 @@ function App() {
       setLoading(true)
       const result = await firebaseProjectDB.deleteProject(id)
       if (result.success) {
-        loadCategories() // Reload categories
+        await loadProjects() // Reload projects
+        await loadCategories() // Reload categories
         alert('✅ Project deleted successfully!')
       } else {
         alert('❌ Error deleting project: ' + result.error)
@@ -259,32 +236,21 @@ function App() {
               </button>
             </form>
 
-            <div className="database-actions">
-              <h3>🔥 Firebase Database Management</h3>
-              <div className="connection-status">
-                <span className={`status-indicator ${isOnline ? 'online' : 'offline'}`}>
-                  {isOnline ? '🟢 Connected' : '🔴 Offline'}
-                </span>
-                <span className="sync-status">
-                  {loading ? '🔄 Syncing...' : '✅ Synchronized'}
-                </span>
-              </div>
-              <div className="action-buttons">
-                <button className="export-btn" onClick={handleExportDatabase} disabled={loading}>
-                  💾 Export Firebase Data
-                </button>
-                <button className="summary-btn" onClick={handleShowDataSummary} disabled={loading}>
-                  📊 View Database Stats
-                </button>
-                <button className="migrate-btn" onClick={handleMigrateFromLocalStorage} disabled={loading}>
-                  🔄 Migrate Cache to Firebase
-                </button>
-              </div>
-              <div className="data-info">
-                <p><strong>🔥 Database:</strong> Firebase Firestore</p>
-                <p><strong>📊 Total Projects:</strong> {projects.length}</p>
-                <p><strong>📂 Categories:</strong> {categories.length - 1}</p>
-                <p><strong>🔄 Real-time:</strong> {isOnline ? 'Active' : 'Disabled'}</p>
+            <div className="simple-info">
+              <h3>� Project Database</h3>
+              <div className="info-grid">
+                <div className="info-item">
+                  <span className="info-label">Total Projects:</span>
+                  <span className="info-value">{projects.length}</span>
+                </div>
+                <div className="info-item">
+                  <span className="info-label">Categories:</span>
+                  <span className="info-value">{categories.length - 1}</span>
+                </div>
+                <div className="info-item">
+                  <span className="info-label">Database:</span>
+                  <span className="info-value">🔥 Firebase + � Local</span>
+                </div>
               </div>
             </div>
 
