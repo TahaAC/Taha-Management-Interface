@@ -85,7 +85,7 @@ function App() {
     <div className="app">
       <header className="header">
         <div className="logo-container">
-          <img src="/logo.svg" alt="Taha Association Center Logo" className="logo" />
+          <img src="/logo.png" alt="Taha Association Center Logo" className="logo" />
           <div>
             <h1>Taha Association Center</h1>
             <p className="subtitle">Management Interface Dashboard</p>
