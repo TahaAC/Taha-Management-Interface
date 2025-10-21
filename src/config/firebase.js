@@ -6,12 +6,12 @@ import { getFirestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyDWc0YCVUXnflKgt_tqG0mSPGq04D7Q-O8",
-  authDomain: "taha-school-management-e2076.firebaseapp.com",
-  projectId: "taha-school-management-e2076",
-  storageBucket: "taha-school-management-e2076.firebasestorage.app",
-  messagingSenderId: "1020268079372",
-  appId: "1:1020268079372:web:e6cd398dc3e8fcbf524129"
+  apiKey: "AIzaSyBjUmbya90h1p_C2jEE6j4kD8osUekzNeE",
+  authDomain: "interface-e05b3.firebaseapp.com",
+  projectId: "interface-e05b3",
+  storageBucket: "interface-e05b3.firebasestorage.app",
+  messagingSenderId: "100866290099",
+  appId: "1:100866290099:web:c2193265f579c3b8d21bc6"
 };
 
 // Initialize Firebase

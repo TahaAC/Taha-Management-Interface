@@ -6,7 +6,7 @@ To fix the "Missing or insufficient permissions" error, you need to update your 
 
 ### **Step 1: Go to Firebase Console**
 1. Open [Firebase Console](https://console.firebase.google.com/)
-2. Select your project: `taha-school-management-e2076`
+2. Select your project: `interface-e05b3`
 3. Click **"Firestore Database"** in the left sidebar
 4. Click **"Rules"** tab
 
