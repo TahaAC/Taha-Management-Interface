@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 import projectDB from './database/ProjectDatabase'
+import DatabaseSync from './database/DatabaseSync'
 
 function App() {
   const [projects, setProjects] = useState([])
@@ -14,6 +15,7 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [categories, setCategories] = useState(['All'])
+  const [dataSummary, setDataSummary] = useState(null)
 
   // Load projects from database on mount
   useEffect(() => {
@@ -24,11 +26,35 @@ function App() {
   const loadProjects = () => {
     const allProjects = projectDB.getAllProjects()
     setProjects(allProjects)
+    setDataSummary(DatabaseSync.getDataSummary())
   }
 
   const loadCategories = () => {
     const allCategories = ['All', ...projectDB.getCategories()]
     setCategories(allCategories)
+  }
+
+  const handleExportDatabase = () => {
+    const result = DatabaseSync.exportCurrentData()
+    if (result.success) {
+      alert(`✅ ${result.message}\n\nFile downloaded: taha-projects-database-${new Date().toISOString().split('T')[0]}.json\n\nYou can now replace the projects.json file with this downloaded file to make your changes permanent.`)
+    } else {
+      alert(`❌ Export failed: ${result.error}`)
+    }
+  }
+
+  const handleShowDataSummary = () => {
+    const summary = DatabaseSync.getDataSummary()
+    const summaryText = `
+📊 Database Summary:
+• Total Projects: ${summary.totalProjects}
+• Categories: ${summary.categories.join(', ')}
+• Recently Added: ${summary.recentlyAdded.length}
+
+📋 All Projects:
+${summary.projects.map(p => `• ${p.name} (${p.category})`).join('\n')}
+    `
+    alert(summaryText)
   }
 
   const handleInputChange = (e) => {
@@ -171,6 +197,25 @@ function App() {
                 ✓ Add Project
               </button>
             </form>
+
+            <div className="database-actions">
+              <h3>Database Management</h3>
+              <div className="action-buttons">
+                <button className="export-btn" onClick={handleExportDatabase}>
+                  💾 Export Database File
+                </button>
+                <button className="summary-btn" onClick={handleShowDataSummary}>
+                  📊 View Data Summary
+                </button>
+              </div>
+              {dataSummary && (
+                <div className="data-info">
+                  <p><strong>Total Projects:</strong> {dataSummary.totalProjects}</p>
+                  <p><strong>Categories:</strong> {dataSummary.categories.join(', ')}</p>
+                  <p><strong>Recently Added:</strong> {dataSummary.recentlyAdded.length} projects</p>
+                </div>
+              )}
+            </div>
 
             <div className="manage-projects">
               <h3>Manage Existing Projects</h3>
