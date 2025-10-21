@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['logo.png'],
+      includeAssets: ['logo.svg'],
       manifest: {
         name: 'Taha Association Center Management',
         short_name: 'Taha Center',
@@ -17,15 +17,15 @@ export default defineConfig({
         display: 'standalone',
         icons: [
           {
-            src: '/logo.png',
+            src: '/logo.svg',
             sizes: '192x192',
-            type: 'image/png',
+            type: 'image/svg+xml',
             purpose: 'any maskable'
           },
           {
-            src: '/logo.png',
+            src: '/logo.svg',
             sizes: '512x512',
-            type: 'image/png',
+            type: 'image/svg+xml',
             purpose: 'any maskable'
           }
         ]
