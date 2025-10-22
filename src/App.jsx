@@ -1,9 +1,19 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 import firebaseProjectDB from './database/FirebaseProjectDatabase'
-import DatabaseSync from './database/DatabaseSync'
+import { addInitialProjects } from './database/InitialProjects'
+import BiometricAuth from './services/BiometricAuth'
+import AuthScreen from './components/AuthScreen'
 
 function App() {
+  // Authentication states
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [authLoading, setAuthLoading] = useState(true)
+  const [authError, setAuthError] = useState('')
+  const [biometricAuth] = useState(new BiometricAuth())
+  const [deviceInfo, setDeviceInfo] = useState(null)
+  
+  // Existing states
   const [projects, setProjects] = useState([])
   const [showAdmin, setShowAdmin] = useState(false)
   const [formData, setFormData] = useState({
@@ -17,11 +27,78 @@ function App() {
   const [categories, setCategories] = useState(['All'])
   const [loading, setLoading] = useState(false)
 
-  // Load projects from Firebase/localStorage on mount
+  // Initialize authentication and load projects
   useEffect(() => {
-    loadProjects()
-    loadCategories()
+    initializeAuth()
   }, [])
+
+  // Load projects after authentication
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadProjects()
+      loadCategories()
+    }
+  }, [isAuthenticated])
+
+  const initializeAuth = async () => {
+    setAuthLoading(true)
+    
+    try {
+      // Get device information
+      const info = await biometricAuth.getDeviceInfo()
+      setDeviceInfo(info)
+
+      // Check if already authenticated
+      const isAlreadyAuth = biometricAuth.isAuthenticated()
+      
+      if (info.isMobile && !isAlreadyAuth) {
+        // Mobile device needs authentication
+        setAuthLoading(false)
+        return
+      }
+      
+      // Desktop or already authenticated
+      setIsAuthenticated(true)
+    } catch (error) {
+      console.error('Auth initialization error:', error)
+      // On error, proceed without authentication for desktop
+      if (!deviceInfo?.isMobile) {
+        setIsAuthenticated(true)
+      }
+    }
+    
+    setAuthLoading(false)
+  }
+
+  const handleAuthenticate = async () => {
+    setAuthLoading(true)
+    setAuthError('')
+
+    try {
+      const result = await biometricAuth.authenticate()
+      
+      if (result.success) {
+        setIsAuthenticated(true)
+      } else {
+        setAuthError(result.error || 'Authentication failed. Please try again.')
+      }
+    } catch (error) {
+      console.error('Authentication error:', error)
+      setAuthError('Authentication failed. Please try again.')
+    }
+    
+    setAuthLoading(false)
+  }
+
+  const handleSkipAuth = () => {
+    setIsAuthenticated(true)
+  }
+
+  const handleLogout = () => {
+    biometricAuth.logout()
+    setIsAuthenticated(false)
+    setAuthError('')
+  }
 
   const loadProjects = async () => {
     setLoading(true)
@@ -143,6 +220,21 @@ function App() {
     setSelectedCategory(e.target.value)
   }
 
+  const handleAddInitialProjects = async () => {
+    if (confirm('🚀 Add all initial projects?\n\nThis will add:\n• Bookings\n• Funeral Form\n• Membership\n• Taha School System\n• Smart Squad Pty Ltd\n• Ibuilt Plastering Pty Ltd')) {
+      setLoading(true)
+      try {
+        await addInitialProjects()
+        await loadProjects()
+        await loadCategories()
+        alert('✅ All initial projects added successfully!')
+      } catch (error) {
+        alert('❌ Error adding projects: ' + error.message)
+      }
+      setLoading(false)
+    }
+  }
+
   // Filter projects based on search and category
   const filteredProjects = projects.filter(project => {
     const matchesSearch = searchTerm === '' || 
@@ -156,21 +248,46 @@ function App() {
   })
 
   return (
-    <div className="app">
-      <header className="header">
-        <div className="logo-container">
-          <img src="/logo.png" alt="Taha Association Center Logo" className="logo" />
-          <div>
+    <>
+      {/* Show authentication screen if not authenticated or loading */}
+      {(!isAuthenticated || authLoading) && (
+        <AuthScreen
+          onAuthenticate={handleAuthenticate}
+          onSkip={handleSkipAuth}
+          error={authError}
+          loading={authLoading}
+          deviceInfo={deviceInfo}
+        />
+      )}
+      
+      {/* Main application content */}
+      {isAuthenticated && (
+        <div className="app">
+          <header className="header">
+            <div className="logo-container">
+              <img src="/logo.png" alt="Taha Association Center Logo" className="logo" />
+              <div>
             <h1>Taha Association Center</h1>
             <p className="subtitle">Management Interface Dashboard</p>
           </div>
         </div>
-        <button 
-          className="admin-toggle"
-          onClick={() => setShowAdmin(!showAdmin)}
-        >
-          {showAdmin ? '👁️ View Dashboard' : '⚙️ Add New URL'}
-        </button>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <button 
+            className="admin-toggle"
+            onClick={() => setShowAdmin(!showAdmin)}
+          >
+            {showAdmin ? '👁️ View Dashboard' : '⚙️ Add New URL'}
+          </button>
+          {deviceInfo?.isMobile && (
+            <button 
+              className="admin-toggle"
+              onClick={handleLogout}
+              style={{ background: 'rgba(239, 68, 68, 0.8)' }}
+            >
+              🔒 Logout
+            </button>
+          )}
+        </div>
       </header>
 
       <main className="main-content">
@@ -214,6 +331,7 @@ function App() {
                   <option value="Management">Management</option>
                   <option value="Forms">Forms</option>
                   <option value="Education">Education</option>
+                  <option value="Business">Business</option>
                   <option value="Finance">Finance</option>
                   <option value="Communications">Communications</option>
                   <option value="Other">Other</option>
@@ -249,8 +367,17 @@ function App() {
                 </div>
                 <div className="info-item">
                   <span className="info-label">Database:</span>
-                  <span className="info-value">🔥 Firebase + � Local</span>
+                  <span className="info-value">🔥 Firebase + 💾 Local</span>
                 </div>
+              </div>
+              <div className="quick-actions">
+                <button 
+                  className="init-projects-btn" 
+                  onClick={handleAddInitialProjects}
+                  disabled={loading}
+                >
+                  🚀 Add Initial Projects
+                </button>
               </div>
             </div>
 
@@ -342,7 +469,9 @@ function App() {
       <footer className="footer">
         <p>© 2025 Taha Association Center. All rights reserved.</p>
       </footer>
-    </div>
+        </div>
+      )}
+    </>
   )
 }
 
