@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import './App.css'
 import firebaseProjectDB from './database/FirebaseProjectDatabase'
 import { addInitialProjects } from './database/InitialProjects'
+import { addNewProjects } from './database/NewProjects'
 import BiometricAuth from './services/BiometricAuth'
 import AuthScreen from './components/AuthScreen'
 
@@ -235,6 +236,21 @@ function App() {
     }
   }
 
+  const handleAddNewProjects = async () => {
+    if (confirm('🚀 Add new projects?\n\nThis will add:\n• Bookings (Management)\n• Funeral Form (Management)\n• Membership (Management)\n• Smart Squad Pty Ltd (Business)\n• Ibuilt Plastering Pty Ltd (Business)')) {
+      setLoading(true)
+      try {
+        await addNewProjects()
+        await loadProjects()
+        await loadCategories()
+        alert('✅ All new projects added successfully!')
+      } catch (error) {
+        alert('❌ Error adding projects: ' + error.message)
+      }
+      setLoading(false)
+    }
+  }
+
   // Filter projects based on search and category
   const filteredProjects = projects.filter(project => {
     const matchesSearch = searchTerm === '' || 
@@ -377,6 +393,17 @@ function App() {
                   disabled={loading}
                 >
                   🚀 Add Initial Projects
+                </button>
+                <button 
+                  className="init-projects-btn" 
+                  onClick={handleAddNewProjects}
+                  disabled={loading}
+                  style={{ 
+                    background: 'rgba(59, 130, 246, 0.8)',
+                    marginTop: '1rem'
+                  }}
+                >
+                  🆕 Add New Projects
                 </button>
               </div>
             </div>
